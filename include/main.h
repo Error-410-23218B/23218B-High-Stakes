@@ -1,0 +1,116 @@
+/**
+ * \file main.h
+ *
+ * Contains common definitions and header files used throughout your PROS
+ * project.
+ *
+ * \copyright Copyright (c) 2017-2023, Purdue University ACM SIGBots.
+ * All rights reserved.
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+#ifndef _PROS_MAIN_H_
+#define _PROS_MAIN_H_
+
+/**
+ * If defined, some commonly used enums will have preprocessor macros which give
+ * a shorter, more convenient naming pattern. If this isn't desired, simply
+ * comment the following line out.
+ *
+ * For instance, E_CONTROLLER_MASTER has a shorter name: CONTROLLER_MASTER.
+ * E_CONTROLLER_MASTER is pedantically correct within the PROS styleguide, but
+ * not convenient for most student programmers.
+ */
+#define PROS_USE_SIMPLE_NAMES
+
+/**
+ * If defined, C++ literals will be available for use. All literals are in the
+ * pros::literals namespace.
+ *
+ * For instance, you can do `4_mtr = 50` to set motor 4's target velocity to 50
+ */
+#define PROS_USE_LITERALS
+
+#include "api.h"
+#include "liblvgl/lvgl.h"
+/**
+ * You should add more #includes here
+ */
+#include "okapi/api.hpp"
+//#include "pros/api_legacy.h"
+
+#include "robodash/api.h"
+
+/**
+ * If you find doing pros::Motor() to be tedious and you'd prefer just to do
+ * Motor, you can use the namespace with the following commented out line.
+ *
+ * IMPORTANT: Only the okapi or pros namespace may be used, not both
+ * concurrently! The okapi namespace will export all symbols inside the pros
+ * namespace.
+ */
+// using namespace pros;
+// using namespace pros::literals;
+// using namespace okapi;
+using namespace okapi::literals;
+/**
+ * Prototypes for the competition control tasks are redefined here to ensure
+ * that they can be called from user code (i.e. calling autonomous from a
+ * button press in opcontrol() for testing purposes).
+ */
+
+std::shared_ptr<okapi::OdomChassisController> chassis;
+
+pros::Motor LeftA(1,pros::E_MOTOR_GEAR_BLUE);
+pros::Motor LeftB(2,pros::E_MOTOR_GEAR_BLUE);
+pros::Motor LeftC(3,pros::E_MOTOR_GEAR_BLUE);
+
+pros::Motor RightA(4,pros::E_MOTOR_GEAR_BLUE,true);
+pros::Motor RightB(5,pros::E_MOTOR_GEAR_BLUE,true);
+pros::Motor RightC(6,pros::E_MOTOR_GEAR_BLUE,true);
+
+
+pros::MotorGroup LeftDrivetrain({LeftA,LeftB,LeftC});
+pros::MotorGroup RightDrivetrain({RightA,RightB,RightC});
+pros::Optical opticalSensor(18);
+
+
+pros::ADIDigitalOut intake_piston ('G');
+pros::ADIDigitalOut disk_reject_piston ('H');
+pros::ADIDigitalOut mobo_piston (std::make_pair(17,'A'));  
+
+pros::ADIDigitalIn mobo_limit_switch(std::make_pair(17,'B'));   
+pros::ADIDigitalIn restrict_limit_switch(std::make_pair(17,'C'));   
+
+
+pros::Motor intake_lower(7,pros::E_MOTOR_GEAR_GREEN);
+pros::Motor intake_upper(8,pros::E_MOTOR_GEAR_GREEN);
+pros::Motor arm_motor(9,pros::E_MOTOR_GEAR_RED);
+
+std::shared_ptr<okapi::AsyncPositionController<double,double>> armControl = okapi::AsyncPosControllerBuilder().withMotor(9).build();
+
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void autonomous(void);
+void initialize(void);
+void disabled(void);
+void competition_initialize(void);
+void opcontrol(void);
+#ifdef __cplusplus
+}
+#endif
+
+#ifdef __cplusplus
+/**
+ * You can add C++-only headers here
+ */
+//#include <iostream>
+#endif
+
+#endif  // _PROS_MAIN_H_
