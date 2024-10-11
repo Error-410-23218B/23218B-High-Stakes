@@ -1,13 +1,21 @@
 #include "main.h"
 
+rd::Console console;
 
 
+void autonred(){
+	console.println("Red Auton!");
+}
 
-void autonred(){}
+void autonblue(){
+		console.println("Blue Auton!");
 
-void autonblue(){}
+}
 
-void skillsauton(){}
+void skillsauton(){
+		console.println("Skills Auton!");
+
+}
 
 
 rd::Selector selector({
@@ -15,6 +23,7 @@ rd::Selector selector({
 	{"Auton Blue", &autonblue},
 	{"Skills Run", &skillsauton}
 });
+
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
