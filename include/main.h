@@ -68,9 +68,9 @@ pros::Motor LeftA(1,pros::E_MOTOR_GEAR_BLUE);
 pros::Motor LeftB(2,pros::E_MOTOR_GEAR_BLUE);
 pros::Motor LeftC(3,pros::E_MOTOR_GEAR_BLUE);
 
-pros::Motor RightA(4,pros::E_MOTOR_GEAR_BLUE,true);
-pros::Motor RightB(5,pros::E_MOTOR_GEAR_BLUE,true);
-pros::Motor RightC(6,pros::E_MOTOR_GEAR_BLUE,true);
+pros::Motor RightA(8,pros::E_MOTOR_GEAR_BLUE,true);
+pros::Motor RightB(9,pros::E_MOTOR_GEAR_BLUE,true);
+pros::Motor RightC(10,pros::E_MOTOR_GEAR_BLUE,true);
 
 
 pros::MotorGroup LeftDrivetrain({LeftA,LeftB,LeftC});

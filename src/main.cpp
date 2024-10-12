@@ -14,7 +14,6 @@ void autonblue(){
 
 void skillsauton(){
 		console.println("Skills Auton!");
-
 }
 
 
@@ -133,9 +132,12 @@ void opcontrol() {
 
 	while (true) {
 		
-		LeftDrivetrain.move(master.get_analog(ANALOG_LEFT_Y));
-		RightDrivetrain.move(master.get_analog(ANALOG_RIGHT_Y));
-
+		int power = master.get_analog(ANALOG_LEFT_Y);
+		int turn = master.get_analog(ANALOG_RIGHT_X);
+		int right = power + turn;
+		int left = power - turn;
+		LeftDrivetrain.move(left);
+		RightDrivetrain.move(right);		
 
 	if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
 	{
