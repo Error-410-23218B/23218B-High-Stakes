@@ -35,15 +35,11 @@
 #define PROS_USE_LITERALS
 
 #include "api.h"
-#include "liblvgl/lvgl.h"
+
 /**
  * You should add more #includes here
  */
-#include "okapi/api.hpp"
-//#include "pros/api_legacy.h"
-
-#include "robodash/api.h"
-
+//#include "okapi/api.hpp"
 /**
  * If you find doing pros::Motor() to be tedious and you'd prefer just to do
  * Motor, you can use the namespace with the following commented out line.
@@ -55,42 +51,42 @@
 // using namespace pros;
 // using namespace pros::literals;
 // using namespace okapi;
-using namespace okapi::literals;
+
 /**
  * Prototypes for the competition control tasks are redefined here to ensure
  * that they can be called from user code (i.e. calling autonomous from a
  * button press in opcontrol() for testing purposes).
  */
 
-std::shared_ptr<okapi::OdomChassisController> chassis;
+pros::MotorGroup LeftDrivetrain({1,2,3});
+pros::MotorGroup RightDrivetrain({-8,-9,-10});
 
-pros::Motor LeftA(1,pros::E_MOTOR_GEAR_BLUE);
-pros::Motor LeftB(2,pros::E_MOTOR_GEAR_BLUE);
-pros::Motor LeftC(3,pros::E_MOTOR_GEAR_BLUE);
+pros::Optical opticalSensor(20);
 
-pros::Motor RightA(8,pros::E_MOTOR_GEAR_BLUE,true);
-pros::Motor RightB(9,pros::E_MOTOR_GEAR_BLUE,true);
-pros::Motor RightC(10,pros::E_MOTOR_GEAR_BLUE,true);
-
-
-pros::MotorGroup LeftDrivetrain({LeftA,LeftB,LeftC});
-pros::MotorGroup RightDrivetrain({RightA,RightB,RightC});
-pros::Optical opticalSensor(18);
+pros::ADIEncoder backEncoder('G', 'H');
+pros::ADIEncoder rightEncoder('A', 'B');
+pros::ADIEncoder leftEncoder('C', 'D');
 
 
-pros::ADIDigitalOut intake_piston ('G');
-pros::ADIDigitalOut disk_reject_piston ('H');
-pros::ADIDigitalOut mobo_piston (std::make_pair(17,'A'));  
+pros::adi::Pneumatics intake_piston({17,'B'},false); 
+pros::adi::Pneumatics arm_piston({17,'D'},false);
 
-pros::ADIDigitalIn mobo_limit_switch(std::make_pair(17,'B'));   
-pros::ADIDigitalIn restrict_limit_switch(std::make_pair(17,'C'));   
+pros::adi::Pneumatics mobo_piston({17,'A'},false);  
+pros::adi::Pneumatics mobo_piston2({17,'C'},false);  
+
+// pros::adi::DigitalOut intake_piston(std::make_pair(17,'B')); 
+// pros::adi::DigitalOut  arm_piston(std::make_pair(17,'D'));
+
+// pros::adi::DigitalOut  mobo_piston(std::make_pair(17,'A'));  
+// pros::adi::DigitalOut  mobo_piston2(std::make_pair(17,'C'));  
 
 
-pros::Motor intake_lower(7,pros::E_MOTOR_GEAR_GREEN);
-pros::Motor intake_upper(8,pros::E_MOTOR_GEAR_GREEN);
-pros::Motor arm_motor(9,pros::E_MOTOR_GEAR_RED);
 
-std::shared_ptr<okapi::AsyncPositionController<double,double>> armControl = okapi::AsyncPosControllerBuilder().withMotor(9).build();
+
+pros::Motor intake_lower(18);
+pros::Motor intake_upper(19);
+pros::Motor arm_motor(-11);
+
 
 
 

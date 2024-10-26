@@ -1,28 +1,12 @@
 #include "main.h"
+#include "lemlib/api.hpp"
 
-rd::Console console;
-
-
-void autonred(){
-	console.println("Red Auton!");
-}
-
-void autonblue(){
-		console.println("Blue Auton!");
-
-}
-
-void skillsauton(){
-		console.println("Skills Auton!");
-}
-
-
-rd::Selector selector({
-	{"Auton Red", &autonred},
-	{"Auton Blue", &autonblue},
-	{"Skills Run", &skillsauton}
-});
-
+/**
+ * A callback function for LLEMU's center button.
+ *
+ * When this callback is fired, it will toggle line 2 of the LCD text between
+ * "I was pressed!" and nothing.
+ */
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -34,41 +18,79 @@ rd::Selector selector({
 
 
 
+lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
+                              &RightDrivetrain, // right motor group
+                              13.61,	 // 10 inch track width
+                              lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
+                              303, // drivetrain rpm is 360
+                              2 // horizontal drift is 2 (for now)
+);
+
+pros::adi::Encoder left_encoder('A', 'B');	
+pros::adi::Encoder right_encoder('G', 'H');
+pros::adi::Encoder back_encoder('C', 'D');
+
+
+lemlib::TrackingWheel left_tracking_wheel(&left_encoder, lemlib::Omniwheel::NEW_275, -2.8);
+
+lemlib::TrackingWheel right_tracking_wheel(&right_encoder, lemlib::Omniwheel::NEW_275, 3.24);
+
+
+lemlib::TrackingWheel vertical_tracking_wheel(&back_encoder, lemlib::Omniwheel::NEW_275, -2.8);
+
+pros::Imu imu(7);
+
+lemlib::OdomSensors sensors(&left_tracking_wheel, // vertical tracking wheel 1, set to null
+                            &right_tracking_wheel, // vertical tracking wheel 2, set to nullptr as we are using IMEs
+                            &vertical_tracking_wheel, // horizontal tracking wheel 1
+                            nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
+                            &imu// inertial sensor
+);
+
+// lateral PID controller
+lemlib::ControllerSettings lateral_controller(20, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              9.04, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
+);
+
+// angular PID controller
+lemlib::ControllerSettings angular_controller(0.5, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              10, // derivative gain (kD)
+                                              0, // anti windup
+                                              0, // small error range, in degrees
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in degrees
+                                              0, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
+
+lemlib::Chassis chassis(drivetrain, // drivetrain settings
+                        lateral_controller, // lateral PID settings
+                        angular_controller, // angular PID settings
+                        sensors // odometry sensors
+);
+
 
 void initialize() {
 
+LeftDrivetrain.set_voltage_limit(6000);
+RightDrivetrain.set_voltage_limit(6000);
 
+chassis.calibrate();
+chassis.setPose(0, 0, 0);
 
-	intake_lower.set_voltage_limit(6);
-	intake_upper.set_voltage_limit(6);
-
-	// Odometry initialise
-chassis =	
-okapi::ChassisControllerBuilder()
-	.withLogger(
-		std::make_shared<okapi::Logger>(
-			okapi::TimeUtilFactory::createDefault().getTimer(),
-			"/ser/sout",
-			okapi::Logger::LogLevel::error
-		)
-	)
-	.withMotors(
-		{1,2,3},
-		{-4,-5,-6}
-	)
-	.withDimensions(okapi::AbstractMotor::gearset::blue, {{3.25_in,11.5_in},okapi::imev5GreenTPR})
-	.withSensors(
-		okapi::ADIEncoder{'A','B'},
-		okapi::ADIEncoder{'C','D',true},
-		okapi::ADIEncoder{'E','F'}
-
-	)
-	.withOdometry({{2.75_in, 7_in, 1_in, 2.75_in},okapi::quadEncoderTPR})
-	.buildOdometry();
-	
-
+pros::c::ext_adi_port_set_config(17,'A',pros::E_ADI_DIGITAL_OUT);
+pros::c::ext_adi_port_set_config(17,'C',pros::E_ADI_DIGITAL_OUT);
+pros::c::ext_adi_port_set_config(17,'B',pros::E_ADI_DIGITAL_OUT);
+pros::c::ext_adi_port_set_config(17,'D',pros::E_ADI_DIGITAL_OUT);
 }
-
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -86,8 +108,7 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {
-}
+void competition_initialize() {}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -100,10 +121,13 @@ void competition_initialize() {
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {
-		chassis->setState({0_in,0_in,0_deg});
-		selector.run_auton();
+
+void matchAutonomous(){
+	chassis.moveToPoint(0,24,2000);
+
 }
+
+void autonomous() {}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -118,65 +142,132 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-void opcontrol() {
 
+void opcontrol()
+{
 
 	bool moboPistonBool = false;
+	bool intakeBool = false;
 	bool intakeLowerBool = false;
+	bool intakeUpperBool = false;
+
+	bool pneumaticsBool = false;
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	okapi::ControllerButton btnUp(okapi::ControllerDigital::R1);
-	okapi::ControllerButton btnDown(okapi::ControllerDigital::R2);
-  	int goalHeight = 0;
+
+	int goalHeight = 0;
+	bool armBool = false;
+	bool armPBool = false;
+	
 
 
-
-	while (true) {
-		
+	while (true)
+	{
+		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
-		int right = power + turn;
 		int left = power - turn;
+		int right = power + turn;
 		LeftDrivetrain.move(left);
-		RightDrivetrain.move(right);		
+		RightDrivetrain.move(right);
 
-	if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
-	{
-		goalHeight++;
-		armControl->setTarget(goalHeight);
+
+	std::cout << arm_motor.get_position();
+		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+		// {
+
+		// 	goalHeight += 128;
+		// 	armControl->setTarget(goalHeight);
+		// 	pros::delay(5);
+		// }
+
+		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
+		// {
+		// 	armControl->setMaxVelocity(100);
+		// 	goalHeight -= 132;
+		// 	armControl->setTarget(goalHeight);
+		// 	pros::delay(5);
+		// }
+
+
+
+		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1))
+		// {
+		// 	goalHeight += 1;
+
+		// 	armControl->setTarget(goalHeight);
+		// }
+
+
+
+		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2))
+		// {
+		// 	goalHeight -= 1;
+		// 	armControl->setTarget(goalHeight);
+		// }
+
+	if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
+
+		arm_motor.move_velocity(100);
 	}
-	else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
-	{
-		goalHeight--;
-		armControl->setTarget(goalHeight);
+
+	else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
+
+		arm_motor.move_velocity(-100);
 
 	}
+
 	else{
-		armControl->setTarget(goalHeight);
-	}
-	
 
-	if (master.get_digital(pros::E_CONTROLLER_DIGITAL_X)){
-		moboPistonBool = !moboPistonBool;
-		mobo_piston.set_value(moboPistonBool?HIGH:LOW);
+		arm_motor.move_voltage(0);
 	}
 
-	if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y))
-	{
-		intakeLowerBool = !intakeLowerBool;
-		intake_lower.move(intakeLowerBool?127:0);
-	}
 
-	disk_reject_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
+
+
+
+
+
+
+
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X))
+		{
+			intakeBool = !intakeBool;
+			intake_lower.move(intakeBool ? 127 : 0);
+			intake_upper.move(intakeBool ? 127 : 0);
+		}
+
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
+		{
+			intakeLowerBool = !intakeLowerBool;
+			intake_lower.move(intakeLowerBool ? -127 : 0);
+		}
+
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
+		{
+			intakeUpperBool = !intakeUpperBool;
+			intake_upper.move(intakeUpperBool ? -127 : 0);
+		}
+
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1))
+		{
+			mobo_piston.toggle();
+			mobo_piston2.toggle();
+
+			
+		}
+
+		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)){
+			arm_piston.toggle();
 	
-		
-
-	mobo_piston.set_value(mobo_limit_switch.get_value() == HIGH ? HIGH : LOW);
-	
-	
+		}
 
 
-
-	pros::delay(20);
-	}	
+if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y))
+{
+	matchAutonomous();
 }
-	
+		// intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
+
+		// mobo_piston.set_value(mobo_limit_switch.get_value() == HIGH ? HIGH : LOW);
+	}
+}
