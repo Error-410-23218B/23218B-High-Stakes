@@ -22,14 +22,14 @@ lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
                               &RightDrivetrain, // right motor group
                               13.61,	 // 10 inch track width
                               lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
-                              303, // drivetrain rpm is 360
+                              450, // drivetrain rpm is 450
                               2 // horizontal drift is 2 (for now)
 );
+
 
 pros::adi::Encoder left_encoder('A', 'B');	
 pros::adi::Encoder right_encoder('G', 'H');
 pros::adi::Encoder back_encoder('C', 'D');
-
 
 lemlib::TrackingWheel left_tracking_wheel(&left_encoder, lemlib::Omniwheel::NEW_275, -2.8);
 
@@ -40,8 +40,9 @@ lemlib::TrackingWheel vertical_tracking_wheel(&back_encoder, lemlib::Omniwheel::
 
 pros::Imu imu(7);
 
-lemlib::OdomSensors sensors(&left_tracking_wheel, // vertical tracking wheel 1, set to null
-                            &right_tracking_wheel, // vertical tracking wheel 2, set to nullptr as we are using IMEs
+
+lemlib::OdomSensors sensors(&left_tracking_wheel, 
+                            &right_tracking_wheel,
                             &vertical_tracking_wheel, // horizontal tracking wheel 1
                             nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
                             &imu// inertial sensor
@@ -60,9 +61,9 @@ lemlib::ControllerSettings lateral_controller(20, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(0.5, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(3.1, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              10, // derivative gain (kD)
+                                              30, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in degrees
                                               0, // small error range timeout, in milliseconds
@@ -77,11 +78,12 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         sensors // odometry sensors
 );
 
+	pros::Controller master(pros::E_CONTROLLER_MASTER);
+
 
 void initialize() {
 
-LeftDrivetrain.set_voltage_limit(6000);
-RightDrivetrain.set_voltage_limit(6000);
+
 
 chassis.calibrate();
 chassis.setPose(0, 0, 0);
@@ -123,7 +125,12 @@ void competition_initialize() {}
  */
 
 void matchAutonomous(){
-	chassis.moveToPoint(0,24,2000);
+	// chassis.moveToPoint(0,24,2000);
+	
+	chassis.turnToHeading(90,4000);
+	 master.set_text(2,0,std::to_string(chassis.getPose().theta));
+	 std::cout << std::to_string(chassis.getPose().theta);
+	 std::cout << std::to_string(imu.get_heading());
 
 }
 
@@ -152,7 +159,6 @@ void opcontrol()
 	bool intakeUpperBool = false;
 
 	bool pneumaticsBool = false;
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
 
 	int goalHeight = 0;
 	bool armBool = false;

@@ -63,9 +63,7 @@ pros::MotorGroup RightDrivetrain({-8,-9,-10});
 
 pros::Optical opticalSensor(20);
 
-pros::ADIEncoder backEncoder('G', 'H');
-pros::ADIEncoder rightEncoder('A', 'B');
-pros::ADIEncoder leftEncoder('C', 'D');
+
 
 
 pros::adi::Pneumatics intake_piston({17,'B'},false); 
@@ -73,12 +71,6 @@ pros::adi::Pneumatics arm_piston({17,'D'},false);
 
 pros::adi::Pneumatics mobo_piston({17,'A'},false);  
 pros::adi::Pneumatics mobo_piston2({17,'C'},false);  
-
-// pros::adi::DigitalOut intake_piston(std::make_pair(17,'B')); 
-// pros::adi::DigitalOut  arm_piston(std::make_pair(17,'D'));
-
-// pros::adi::DigitalOut  mobo_piston(std::make_pair(17,'A'));  
-// pros::adi::DigitalOut  mobo_piston2(std::make_pair(17,'C'));  
 
 
 
