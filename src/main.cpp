@@ -18,8 +18,8 @@
 
 
 
-lemlib::Drivetrain drivetrain(&RightOdomDrivetrain, // left motor group
-                              &LeftOdomDrivetrain, // right motor group
+lemlib::Drivetrain drivetrain(&RightDrivetrain, // left motor group
+                              &LeftDrivetrain, // right motor group
                               13.61,	 // 10 inch track width
                               lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
                               450, // drivetrain rpm is 450
@@ -27,7 +27,7 @@ lemlib::Drivetrain drivetrain(&RightOdomDrivetrain, // left motor group
 );
 
 
-pros::adi::Encoder left_encoder('G', 'H',true);	
+pros::adi::Encoder left_encoder('G', 'H');	
 pros::adi::Encoder right_encoder('A', 'B');
 pros::adi::Encoder back_encoder('C', 'D');
 
@@ -123,14 +123,16 @@ void competition_initialize() {}
  * from where it left off.
  */
 
-void matchAutonomous(){
-	chassis.moveToPoint(0,12,4000);
+void angularTest(){
 	
-	// chassis.turnToHeading(20,4000);
+	
+	chassis.turnToHeading(90,4000);
 	 master.set_text(2,0,std::to_string(chassis.getPose().theta));
-	 std::cout << std::to_string(chassis.getPose().theta);
-	 std::cout << std::to_string(imu.get_heading());
 
+}
+
+void linearTest(){
+	 chassis.moveToPose(0,12,90,5000);
 }
 
 void autonomous() {}
@@ -167,7 +169,7 @@ void opcontrol()
 
 	while (true)
 	{
-			 master.set_text(2,0,std::to_string(chassis.getPose().y));
+			 master.set_text(2,0,std::to_string(chassis.getPose().theta));
 	std::cout << std::to_string(chassis.getPose().theta);
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
@@ -269,10 +271,17 @@ void opcontrol()
 		}
 
 
-if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y))
+if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP))
 {
-	matchAutonomous();
+	angularTest();
 }
+
+if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN))
+{
+	linearTest();
+}
+	
+
 		// intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
 
 		// mobo_piston.set_value(mobo_limit_switch.get_value() == HIGH ? HIGH : LOW);
