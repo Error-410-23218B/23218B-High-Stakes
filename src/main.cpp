@@ -18,8 +18,8 @@
 
 
 
-lemlib::Drivetrain drivetrain(&RightDrivetrain, // left motor group
-                              &LeftDrivetrain, // right motor group
+lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
+                              &RightDrivetrain, // right motor group
                               13.61,	 // 10 inch track width
                               lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
                               450, // drivetrain rpm is 450
@@ -61,7 +61,7 @@ lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(1.9, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               10, // derivative gain (kD)
                                               3, // anti windup
@@ -132,7 +132,7 @@ void angularTest(){
 }
 
 void linearTest(){
-	 chassis.moveToPose(0,12,90,5000);
+	 chassis.moveToPoint(0,12,5000);
 }
 
 void autonomous() {}
@@ -169,13 +169,13 @@ void opcontrol()
 
 	while (true)
 	{
-			 master.set_text(2,0,std::to_string(chassis.getPose().theta));
+			 master.set_text(2,0,std::to_string(chassis.getPose().y));
 	std::cout << std::to_string(chassis.getPose().theta);
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
-		int left = power - turn;
-		int right = power + turn;
+		int left = power + turn;
+		int right = power - turn;
 		LeftDrivetrain.move(left);
 		RightDrivetrain.move(right);
 
