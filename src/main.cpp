@@ -61,9 +61,9 @@ lemlib::ControllerSettings lateral_controller(20, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(0.2, // proportional gain (kP)
-                                              0.08, // integral gain (kI)
-                                              15, // derivative gain (kD)
+lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              70, // derivative gain (kD)
                                               100, // anti windup
                                               1, // small error range, in degrees
                                               3, // small error range timeout, in milliseconds
@@ -125,7 +125,7 @@ void competition_initialize() {}
  */
 
 void matchAutonomous(){
-	// chassis.moveToPoint(0,24,2000);
+	// chassis.moveToPoint(0,24,4000);
 	
 	chassis.turnToHeading(90,4000);
 	 master.set_text(2,0,std::to_string(chassis.getPose().theta));
@@ -168,6 +168,8 @@ void opcontrol()
 
 	while (true)
 	{
+			 master.set_text(2,0,std::to_string(chassis.getPose().theta));
+
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
