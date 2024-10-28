@@ -61,6 +61,9 @@
 pros::MotorGroup LeftDrivetrain({1,2,3});
 pros::MotorGroup RightDrivetrain({-8,-9,-10});
 
+pros::MotorGroup LeftOdomDrivetrain({-1,-2,-3});
+pros::MotorGroup RightOdomDrivetrain({8,9,10});
+
 pros::Optical opticalSensor(20);
 
 

@@ -18,8 +18,8 @@
 
 
 
-lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
-                              &RightDrivetrain, // right motor group
+lemlib::Drivetrain drivetrain(&RightOdomDrivetrain, // left motor group
+                              &LeftOdomDrivetrain, // right motor group
                               13.61,	 // 10 inch track width
                               lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
                               450, // drivetrain rpm is 450
@@ -27,7 +27,7 @@ lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
 );
 
 
-pros::adi::Encoder left_encoder('G', 'H');	
+pros::adi::Encoder left_encoder('G', 'H',true);	
 pros::adi::Encoder right_encoder('A', 'B');
 pros::adi::Encoder back_encoder('C', 'D');
 
@@ -49,29 +49,28 @@ lemlib::OdomSensors sensors(&left_tracking_wheel,
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(20, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              9.04, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+                                              1, // derivative gain (kD)
+                                              0, // anti windup
+                                              0, // small error range, in inches
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in inches
+                                              0, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
 );
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              0, // derivative gain (kD)
-                                              0, // anti windup
-                                              0, // small error range, in degrees
-                                              0, // small error range timeout, in milliseconds
-                                              0, // large error range, in degrees
-                                              0, // large error range timeout, in milliseconds
+                                              10, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
-
 lemlib::Chassis chassis(drivetrain, // drivetrain settings
                         lateral_controller, // lateral PID settings
                         angular_controller, // angular PID settings
@@ -125,9 +124,9 @@ void competition_initialize() {}
  */
 
 void matchAutonomous(){
-	// chassis.moveToPoint(0,24,4000);
+	chassis.moveToPoint(0,12,4000);
 	
-	chassis.turnToHeading(90,4000);
+	// chassis.turnToHeading(20,4000);
 	 master.set_text(2,0,std::to_string(chassis.getPose().theta));
 	 std::cout << std::to_string(chassis.getPose().theta);
 	 std::cout << std::to_string(imu.get_heading());
@@ -168,8 +167,8 @@ void opcontrol()
 
 	while (true)
 	{
-			 master.set_text(2,0,std::to_string(chassis.getPose().theta));
-
+			 master.set_text(2,0,std::to_string(chassis.getPose().y));
+	std::cout << std::to_string(chassis.getPose().theta);
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
