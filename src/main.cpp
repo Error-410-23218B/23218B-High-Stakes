@@ -49,9 +49,9 @@ lemlib::OdomSensors sensors(&left_tracking_wheel,
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(200, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              1, // derivative gain (kD)
+                                              50, // derivative gain (kD)
                                               0, // anti windup
                                               0, // small error range, in inches
                                               0, // small error range timeout, in milliseconds
@@ -133,8 +133,7 @@ void angularTest(){
 }
 
 void linearTest(){
-	chassis.moveToPose(24,24,0,5000);
-	chassis.moveToPose(24,48,0,5000);
+	chassis.moveToPose(0,24,0,5000);
 	
 }
 
