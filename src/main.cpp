@@ -134,6 +134,7 @@ void angularTest(){
 
 void linearTest(){
 	chassis.moveToPose(24,24,0,5000);
+	chassis.moveToPose(24,48,0,5000);
 	
 }
 
