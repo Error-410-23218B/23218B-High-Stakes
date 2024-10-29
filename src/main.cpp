@@ -61,14 +61,14 @@ lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
 );
 
 // angular PID controller
-lemlib::ControllerSettings angular_controller(1.5, // proportional gain (kP)
+lemlib::ControllerSettings angular_controller(1.55, // proportional gain (kP)
                                               0, // integral gain (kI)
                                               10, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
+                                              0, // anti windup
+                                              0, // small error range, in inches
+                                              0, // small error range timeout, in milliseconds
+                                              0, // large error range, in inches
+                                              0, // large error range timeout, in milliseconds
                                               0 // maximum acceleration (slew)
 );
 lemlib::Chassis chassis(drivetrain, // drivetrain settings
@@ -82,15 +82,15 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 
 void initialize() {
 
-
-
-chassis.calibrate();
-chassis.setPose(0, 0, 0);
-
 pros::c::ext_adi_port_set_config(17,'A',pros::E_ADI_DIGITAL_OUT);
 pros::c::ext_adi_port_set_config(17,'C',pros::E_ADI_DIGITAL_OUT);
 pros::c::ext_adi_port_set_config(17,'B',pros::E_ADI_DIGITAL_OUT);
 pros::c::ext_adi_port_set_config(17,'D',pros::E_ADI_DIGITAL_OUT);
+
+chassis.calibrate();
+chassis.setPose(0, 0, 0);
+
+
 }
 
 /**
@@ -169,8 +169,8 @@ void opcontrol()
 
 	while (true)
 	{
-			 master.set_text(2,0,std::to_string(chassis.getPose().y));
-	std::cout << std::to_string(chassis.getPose().theta);
+			 master.set_text(2,0,std::to_string(imu.get_heading()));
+	std::cout << std::to_string(chassis.getPose().y);
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
