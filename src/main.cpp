@@ -29,7 +29,7 @@ lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
 
 pros::adi::Encoder left_encoder('G', 'H');	
 pros::adi::Encoder right_encoder('A', 'B');
-pros::adi::Encoder back_encoder('C', 'D');
+pros::adi::Encoder back_encoder('C', 'D',true);
 
 lemlib::TrackingWheel left_tracking_wheel(&left_encoder, lemlib::Omniwheel::NEW_275, 3.24);
 
@@ -78,6 +78,7 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 );
 
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
+
 
 
 void initialize() {
@@ -132,9 +133,14 @@ void angularTest(){
 }
 
 void linearTest(){
-	 chassis.moveToPoint(0,12,5000);
+	chassis.moveToPose(24,24,0,5000);
+	
 }
 
+void returnTest(){
+		 chassis.moveToPose(0,0,0,5000);
+
+}
 void autonomous() {}
 
 /**
@@ -169,7 +175,7 @@ void opcontrol()
 
 	while (true)
 	{
-			 master.set_text(2,0,std::to_string(imu.get_heading()));
+			 master.set_text(2,0,std::to_string(chassis.getPose().x));
 	std::cout << std::to_string(chassis.getPose().y);
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
@@ -281,6 +287,10 @@ if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN))
 	linearTest();
 }
 	
+if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT))
+{
+	returnTest();
+}
 
 		// intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
 
