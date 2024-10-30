@@ -81,6 +81,7 @@ pros::Motor intake_lower(18);
 pros::Motor intake_upper(19);
 pros::Motor arm_motor(-11);
 
+pros::MotorGroup intakeMotorGroup({18,19});
 
 
 

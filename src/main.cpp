@@ -137,6 +137,19 @@ void linearTest(){
 	
 }
 
+
+void matchAutonomous(){
+	chassis.moveToPose(72,0,135,3000);
+	arm_motor.move_relative(-20,100);
+	chassis.moveToPose(48,48,180,3000,{.forwards = false});
+	mobo_piston.extend();
+	mobo_piston2.extend();
+	intakeMotorGroup.move(127);
+	chassis.moveToPose(24,48,270,3000);
+	chassis.moveToPose(72,24,0,3000);
+	chassis.moveToPose(72,72,0,3000);
+}
+
 void returnTest(){
 		 chassis.moveToPose(0,0,0,5000);
 
@@ -247,8 +260,7 @@ void opcontrol()
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X))
 		{
 			intakeBool = !intakeBool;
-			intake_lower.move(intakeBool ? 127 : 0);
-			intake_upper.move(intakeBool ? 127 : 0);
+			intakeMotorGroup.move(intakeBool ? 127 : 0);
 		}
 
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
