@@ -80,6 +80,7 @@ lemlib::Chassis chassis(drivetrain, // drivetrain settings
 	pros::Controller master(pros::E_CONTROLLER_MASTER);
 
 
+ASSET(matchauton_txt);
 
 void initialize() {
 
