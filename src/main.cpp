@@ -141,6 +141,7 @@ void linearTest(){
 void matchAutonomous(){
 	chassis.moveToPose(72,0,135,3000);
 	arm_motor.move_relative(-20,100);
+	pros::delay(2000);
 	chassis.moveToPose(48,48,180,3000,{.forwards = false});
 	mobo_piston.extend();
 	mobo_piston2.extend();
