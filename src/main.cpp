@@ -146,6 +146,7 @@ void matchAutonomous(){
 	mobo_piston.extend();
 	mobo_piston2.extend();
 	intakeMotorGroup.move(127);
+	pros::delay(2000);
 	chassis.moveToPose(24,48,270,3000);
 	chassis.moveToPose(72,24,0,3000);
 	chassis.moveToPose(72,72,0,3000);
