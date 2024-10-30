@@ -49,9 +49,9 @@ lemlib::OdomSensors sensors(&left_tracking_wheel,
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(500, // proportional gain (kP)
+lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
                                               0, // integral gain (kI)
-                                              70, // derivative gain (kD)
+                                              1, // derivative gain (kD)
                                               3, // anti windup
                                               1, // small error range, in inches
                                               100, // small error range timeout, in milliseconds
@@ -140,25 +140,53 @@ void linearTest(){
 
 
 void matchAutonomous(){
+	chassis.setPose(72,0,180);
+	
+	chassis.moveToPose(72,10,180,3000,{.forwards = false});
+	intake_upper.move(-127);
+	pros::delay(500);
+	intake_upper.move(0);
+	pros::delay(650);
+	arm_motor.move_velocity(100);
+	pros::delay(1750);
+	arm_motor.move_velocity(0);
 
-	chassis.moveToPose(72,0,135,3000);
-	arm_motor.move_relative(-20,100);
-	pros::delay(2000);
-	chassis.moveToPose(48,48,180,3000,{.forwards = false});
+	
+	chassis.moveToPose(66.5,35.5,155,4000,{.forwards = false});
+	
+	pros::delay(3000);
 	mobo_piston.extend();
 	mobo_piston2.extend();
-	intakeMotorGroup.move(127);
-	pros::delay(2000);
-	chassis.moveToPose(24,48,270,3000);
-	chassis.moveToPose(72,24,0,3000);
-	chassis.moveToPose(72,72,0,3000);
+	chassis.moveToPose(12,36,270,3000);
+	
+	
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
+	// chassis.moveToPose(72,16,180,3000);
+
+	// arm_motor.move_relative(-20,100);
+	// pros::delay(2000);
+	// chassis.moveToPose(48,48,180,3000,{.forwards = false});
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
+	// intakeMotorGroup.move(127);
+	// pros::delay(2000);
+	// chassis.turnToHeading(270,2000);
+	// chassis.moveToPoint(24,48,3000);
+	// chassis.moveToPose(72,24,0,3000);
+	// chassis.moveToPose(72,48,0,3000);
 }
+
+
 
 void returnTest(){
-		 chassis.moveToPose(0,0,0,5000);
+	chassis.moveToPose(0,0,0,5000);
 
 }
-void autonomous() {}
+
+void autonomous() {
+	matchAutonomous();
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -188,7 +216,6 @@ void opcontrol()
 	bool armBool = false;
 	bool armPBool = false;
 	
-
 
 	while (true)
 	{
@@ -306,6 +333,15 @@ if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN))
 if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT))
 {
 	returnTest();
+}
+
+if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_RIGHT))
+{
+	arm_motor.move_velocity(100);
+	pros::delay(1750);
+	arm_motor.move_velocity(0);
+
+
 }
 
 		// intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
