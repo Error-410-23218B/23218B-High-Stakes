@@ -89,7 +89,6 @@ pros::c::ext_adi_port_set_config(17,'B',pros::E_ADI_DIGITAL_OUT);
 pros::c::ext_adi_port_set_config(17,'D',pros::E_ADI_DIGITAL_OUT);
 
 chassis.calibrate();
-chassis.setPose(0, 0, 0);
 
 
 }
