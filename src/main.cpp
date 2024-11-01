@@ -17,7 +17,6 @@
 
 
 
-
 lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
                               &RightDrivetrain, // right motor group
                               13.61,	 // 10 inch track width
@@ -111,7 +110,28 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+
+void opticalSensor(color){
+	while(true)
+{
+if(blue)	
+{
+	if (opticalSensor.get_rgb().blue > opticalSensor.get_rgb().red && opticalSensor.get_rgb().blue > opticalSensor.get_rgb().green && opticalSensor.get_rgb().blue > 180 && pros::competition::is_autonomous() )
+	{
+		chassis.cancelAllMotions();
+	}
+
+}
+
+else (opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green && opticalSensor.get_rgb().red > 180 && pros::competition::is_autonomous()){
+
+}
+	}
+}
+
+void competition_initialize() {
+		
+}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -139,7 +159,8 @@ void linearTest(){
 }
 
 
-void matchAutonomous(){
+void redAutonomous(){
+	pros::Task opticalTask(opticalSensor,false);
 	chassis.setPose(72,0,180);
 	
 	chassis.moveToPose(72,10,180,3000,{.forwards = false});
@@ -177,16 +198,93 @@ void matchAutonomous(){
 	// chassis.moveToPose(72,48,0,3000);
 }
 
+void blueAutonomous(){
+	pros::Task opticalTask(opticalSensor,true);
+	chassis.setPose(72,0,180);
+	
+	chassis.moveToPose(72,10,180,3000,{.forwards = false});
+	intake_upper.move(-127);
+	pros::delay(500);
+	intake_upper.move(0);
+	pros::delay(650);
+	arm_motor.move_velocity(100);
+	pros::delay(1750);
+	arm_motor.move_velocity(0);
 
+	
+	chassis.moveToPose(66.5,35.5,155,4000,{.forwards = false});
+	
+	pros::delay(3000);
+	mobo_piston.extend();
+	mobo_piston2.extend();
+	chassis.moveToPose(12,36,270,3000);
+	
+	
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
+	// chassis.moveToPose(72,16,180,3000);
+
+	// arm_motor.move_relative(-20,100);
+	// pros::delay(2000);
+	// chassis.moveToPose(48,48,180,3000,{.forwards = false});
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
+	// intakeMotorGroup.move(127);
+	// pros::delay(2000);
+	// chassis.turnToHeading(270,2000);
+	// chassis.moveToPoint(24,48,3000);
+	// chassis.moveToPose(72,24,0,3000);
+	// chassis.moveToPose(72,48,0,3000);
+}
+
+ASSET(skills1_txt);
+ASSET(skills2_txt);
+ASSET(match1_txt);
+ASSET(match2_txt);
+void skillsAutonomous(){
+	intakeGroup.move(127);
+	chassis.follow(skills1_txt,10,10000);
+	mobo_piston.extend();
+	mobo_piston2.extend();
+	chassis.follow(skills2_txt,10,20000);
+	mobo_piston.retract();
+	mobo_piston2.retract();
+
+
+}
+
+void matchAutonomousPursuit(){
+	chassis.follow(match1_txt,10,3000);
+	arm_motor.move(-127);
+	pros::delay(1000);
+	arm_motor.move(127);
+	pros::delay(500)
+	intakeMotorGroup.move(127);
+	chassis.follow(match2_txt,10,5000);
+	mobo_piston.extend();
+	mobo_piston2.extend();
+	
+}
 
 void returnTest(){
 	chassis.moveToPose(0,0,0,5000);
 
 }
 
+rd::Selector selector({
+    {"Red Auton", redAutonomous},
+    {"Blue auton", blueAutonomous},
+    {"Skills auton", skillsAutonomous},
+});
+
+
 void autonomous() {
-	matchAutonomous();
+	selector.run_auton();
 }
+
+
+
+
 
 /**
  * Runs the operator control code. This function will be started in its own task
