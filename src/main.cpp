@@ -110,10 +110,11 @@ void disabled() {}
  * starts.
  */
 
-void opticalSensor(color){
+void opticalSensorAuton(void* color){
+	 bool colors = *(static_cast<bool*>(color));
 	while(true)
 {
-if(blue)	
+if(colors)	
 {
 	if (opticalSensor.get_rgb().blue > opticalSensor.get_rgb().red && opticalSensor.get_rgb().blue > opticalSensor.get_rgb().green && opticalSensor.get_rgb().blue > 180 && pros::competition::is_autonomous() )
 	{
@@ -122,7 +123,10 @@ if(blue)
 
 }
 
-else (opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green && opticalSensor.get_rgb().red > 180 && pros::competition::is_autonomous()){
+else {
+	if (opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green && opticalSensor.get_rgb().red > 180 && pros::competition::is_autonomous()){
+		chassis.cancelAllMotions();
+	}
 
 }
 	}
@@ -159,7 +163,9 @@ void linearTest(){
 
 
 void redAutonomous(){
-	pros::Task opticalTask(opticalSensor,false);
+	bool redColor = false; // For red autonomous
+
+	pros::Task opticalTask(opticalSensorAuton,&redColor);
 	chassis.setPose(72,0,180);
 	
 	chassis.moveToPose(72,10,180,3000,{.forwards = false});
@@ -209,7 +215,8 @@ void redAutonomous(){
 }
 
 void blueAutonomous(){
-	pros::Task opticalTask(opticalSensor,true);
+	bool blueColor = true; // For blue autonomous
+	pros::Task opticalTask(opticalSensorAuton,&blueColor);
 	chassis.setPose(72,0,180);
 	
 	chassis.moveToPose(72,10,180,3000,{.forwards = false});
@@ -309,7 +316,7 @@ ASSET(match2_txt);
 ASSET(match3_txt);
 ASSET(match4_txt);
 void skillsAutonomous(){
-	intakeGroup.move(127);
+	intakeMotorGroup.move(127);
 	chassis.follow(skills1_txt,10,10000);
 	mobo_piston.extend();
 	mobo_piston2.extend();
