@@ -307,6 +307,8 @@ ASSET(skills1_txt);
 ASSET(skills2_txt);
 ASSET(match1_txt);
 ASSET(match2_txt);
+ASSET(match3_txt);
+ASSET(match4_txt);
 void skillsAutonomous(){
 	intakeGroup.move(127);
 	chassis.follow(skills1_txt,10,10000);
@@ -320,15 +322,23 @@ void skillsAutonomous(){
 }
 
 void matchAutonomousPursuit(){
+	arm_motor.move(127);
+	pros::delay(1000);
+	intakeMotorGroup.move(0);
 	chassis.follow(match1_txt,10,3000);
 	arm_motor.move(-127);
 	pros::delay(1000);
 	arm_motor.move(127);
-	pros::delay(500)
+	pros::delay(1000);
 	intakeMotorGroup.move(127);
 	chassis.follow(match2_txt,10,5000);
 	mobo_piston.extend();
 	mobo_piston2.extend();
+	pros::delay(500);
+	chassis.follow(match3_txt,10,3000);
+	intake_piston.extend();
+	chassis.follow(match4_txt,10,3000);
+
 	
 }
 
