@@ -248,6 +248,61 @@ void blueAutonomous(){
 	// chassis.moveToPose(72,48,0,3000);
 }
 
+void matchAutonomous(){
+	chassis.setPose(72,0,180);
+	
+	chassis.moveToPose(72,10,180,3000,{.forwards = false});
+	intake_upper.move(-127);
+	pros::delay(500);
+	intake_upper.move(0);
+	chassis.moveToPose(66,35.5,150,4000,{.forwards = false});
+	arm_motor.move_velocity(100);
+	pros::delay(2000);
+	arm_motor.move_velocity(0);
+
+
+
+
+
+	mobo_piston.extend();
+	mobo_piston2.extend();
+	chassis.moveToPose(36,29,270,3000);
+	intakeMotorGroup.move_voltage(12000);
+	pros::delay(2000);
+	chassis.moveToPoint(38,28,3000,{.forwards=false});	
+	pros::delay(3500);
+	intake_piston.extend();
+	chassis.moveToPose(87.5,11.5,182,4000,{.lead = 0.3,.maxSpeed = 70});
+	pros::delay(3000);
+	chassis.moveToPose(89.5,24,0,4000,{.forwards = false});
+
+	// intake_piston.retract();
+	// 	arm_motor.move_velocity(-100);
+	// pros::delay(2000);
+	// arm_motor.move_velocity(0);
+	// pros::delay(2500);
+	// intakeMotorGroup.move_voltage(0);
+	// chassis.turnToHeading(180,3000);
+	// chassis.moveToPose(89.5,2,45,4000);
+
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
+	// chassis.moveToPose(72,16,180,3000);
+
+	// arm_motor.move_relative(-20,100);
+	// pros::delay(2000);
+	// chassis.moveToPose(48,48,180,3000,{.forwards = false});
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
+	// intakeMotorGroup.move(127);
+	// pros::delay(2000);
+	// chassis.turnToHeading(270,2000);
+	// chassis.moveToPoint(24,48,3000);
+	// chassis.moveToPose(72,24,0,3000);
+	// chassis.moveToPose(72,48,0,3000);
+}
+
+
 ASSET(skills1_txt);
 ASSET(skills2_txt);
 ASSET(match1_txt);
