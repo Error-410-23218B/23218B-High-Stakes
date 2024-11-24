@@ -35,7 +35,6 @@
 #define PROS_USE_LITERALS
 
 #include "api.h"
-#include "robodash/api.h"
 
 /**
  * You should add more #includes here
@@ -58,14 +57,11 @@
  * that they can be called from user code (i.e. calling autonomous from a
  * button press in opcontrol() for testing purposes).
  */
+
 pros::MotorGroup LeftDrivetrain({-8,-9,-10});
 pros::MotorGroup RightDrivetrain({1,2,3});
 
-
-
-
 pros::Optical opticalSensor(20);
-
 
 
 
@@ -75,16 +71,23 @@ pros::adi::Pneumatics arm_piston({17,'D'},false);
 pros::adi::Pneumatics mobo_piston({17,'A'},false);  
 pros::adi::Pneumatics mobo_piston2({17,'C'},false);  
 
+pros::adi::DigitalOut led1('E',HIGH);
 
+pros::adi::DigitalOut led2('F',HIGH);
 
+// pros::adi::DigitalOut intake_piston(std::make_pair(17,'B')); 
+// pros::adi::DigitalOut  arm_piston(std::make_pair(17,'D'));
+
+// pros::adi::DigitalOut  mobo_piston(std::make_pair(17,'A'));  
+// pros::adi::DigitalOut  mobo_piston2(std::make_pair(17,'C'));  
+
+pros::adi::DigitalIn limitSwitch(std::make_pair(17,'E'));
 
 pros::Motor intake_lower(18);
 pros::Motor intake_upper(19);
 pros::Motor arm_motor(-11);
 
 pros::MotorGroup intakeMotorGroup({18,19});
-
-
 
 #ifdef __cplusplus
 extern "C" {

@@ -15,82 +15,73 @@
  * to keep execution time for this mode under a few seconds.
  */
 
-
-
-lemlib::Drivetrain drivetrain(&LeftDrivetrain, // left motor group
-                              &RightDrivetrain, // right motor group
-                              13.61,	 // 10 inch track width
-                              lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
-                              450, // drivetrain rpm is 450
-                              2 // horizontal drift is 2 (for now)
+lemlib::Drivetrain drivetrain(&LeftDrivetrain,			  // left motor group
+							  &RightDrivetrain,			  // right motor group
+							  13.61,					  // 10 inch track width
+							  lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
+							  450,						  // drivetrain rpm is 450
+							  2							  // horizontal drift is 2 (for now)
 );
 
-
-pros::adi::Encoder left_encoder('G', 'H');	
+pros::adi::Encoder left_encoder('G', 'H');
 pros::adi::Encoder right_encoder('A', 'B');
-pros::adi::Encoder back_encoder('C', 'D',true);
+pros::adi::Encoder back_encoder('C', 'D', true);
 
 lemlib::TrackingWheel left_tracking_wheel(&left_encoder, lemlib::Omniwheel::NEW_275, 3.24);
 
 lemlib::TrackingWheel right_tracking_wheel(&right_encoder, lemlib::Omniwheel::NEW_275, -2.75);
 
-
 lemlib::TrackingWheel back_tracking_wheel(&back_encoder, lemlib::Omniwheel::NEW_275, -2.8);
 
 pros::Imu imu(7);
 
-
-lemlib::OdomSensors sensors(&left_tracking_wheel, 
+lemlib::OdomSensors sensors(&left_tracking_wheel,
 							nullptr,
-                            &back_tracking_wheel, // horizontal tracking wheel 1
-                            nullptr, // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-                            &imu// inertial sensor
+							&back_tracking_wheel, // horizontal tracking wheel 1
+							nullptr,			  // horizontal tracking wheel 2, set to nullptr as we don't have a second one
+							&imu				  // inertial sensor
 );
 
 // lateral PID controller
-lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              1, // derivative gain (kD)
-                                              3, // anti windup
-                                              1, // small error range, in inches
-                                              100, // small error range timeout, in milliseconds
-                                              3, // large error range, in inches
-                                              500, // large error range timeout, in milliseconds
-                                              20 // maximum acceleration (slew)
+lemlib::ControllerSettings lateral_controller(10,  // proportional gain (kP)
+											  0,   // integral gain (kI)
+											  1,   // derivative gain (kD)
+											  3,   // anti windup
+											  1,   // small error range, in inches
+											  100, // small error range timeout, in milliseconds
+											  3,   // large error range, in inches
+											  500, // large error range timeout, in milliseconds
+											  20   // maximum acceleration (slew)
 );
 
 // angular PID controller
 lemlib::ControllerSettings angular_controller(1.55, // proportional gain (kP)
-                                              0, // integral gain (kI)
-                                              10, // derivative gain (kD)
-                                              0, // anti windup
-                                              0, // small error range, in inches
-                                              0, // small error range timeout, in milliseconds
-                                              0, // large error range, in inches
-                                              0, // large error range timeout, in milliseconds
-                                              0 // maximum acceleration (slew)
+											  0,	// integral gain (kI)
+											  10,	// derivative gain (kD)
+											  0,	// anti windup
+											  0,	// small error range, in inches
+											  0,	// small error range timeout, in milliseconds
+											  0,	// large error range, in inches
+											  0,	// large error range timeout, in milliseconds
+											  0		// maximum acceleration (slew)
 );
-lemlib::Chassis chassis(drivetrain, // drivetrain settings
-                        lateral_controller, // lateral PID settings
-                        angular_controller, // angular PID settings
-                        sensors // odometry sensors
+lemlib::Chassis chassis(drivetrain,			// drivetrain settings
+						lateral_controller, // lateral PID settings
+						angular_controller, // angular PID settings
+						sensors				// odometry sensors
 );
 
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
-
-
-ASSET(matchauton_txt);
-
-void initialize() {
-
-pros::c::ext_adi_port_set_config(17,'A',pros::E_ADI_DIGITAL_OUT);
-pros::c::ext_adi_port_set_config(17,'C',pros::E_ADI_DIGITAL_OUT);
-pros::c::ext_adi_port_set_config(17,'B',pros::E_ADI_DIGITAL_OUT);
-pros::c::ext_adi_port_set_config(17,'D',pros::E_ADI_DIGITAL_OUT);
-
-chassis.calibrate();
-
-
+void initialize()
+{
+	pros::c::ext_adi_port_set_config(17, 'A', pros::E_ADI_DIGITAL_OUT);
+	pros::c::ext_adi_port_set_config(17, 'C', pros::E_ADI_DIGITAL_OUT);
+	pros::c::ext_adi_port_set_config(17, 'B', pros::E_ADI_DIGITAL_OUT);
+	pros::c::ext_adi_port_set_config(17, 'D', pros::E_ADI_DIGITAL_OUT);
+	pros::c::ext_adi_port_set_config(17, 'E', pros::E_ADI_DIGITAL_IN);
+	led1.set_value(HIGH);
+	led2.set_value(HIGH);
+	opticalSensor.set_led_pwm(100);
+	chassis.calibrate();
 }
 
 /**
@@ -109,32 +100,7 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-
-void opticalSensorAuton(void* color){
-	 bool colors = *(static_cast<bool*>(color));
-	while(true)
-{
-if(colors)	
-{
-	if (opticalSensor.get_rgb().blue > opticalSensor.get_rgb().red && opticalSensor.get_rgb().blue > opticalSensor.get_rgb().green && opticalSensor.get_rgb().blue > 180 && pros::competition::is_autonomous() )
-	{
-		chassis.cancelAllMotions();
-	}
-
-}
-
-else {
-	if (opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green && opticalSensor.get_rgb().red > 180 && pros::competition::is_autonomous()){
-		chassis.cancelAllMotions();
-	}
-
-}
-	}
-}
-
-void competition_initialize() {
-		
-}
+void competition_initialize() {}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -148,225 +114,139 @@ void competition_initialize() {
  * from where it left off.
  */
 
-void angularTest(){
-	
-	
-	chassis.turnToHeading(90,4000);
-	 master.set_text(2,0,std::to_string(chassis.getPose().theta));
+void matchAutonomous()
+{
 
-}
-
-void linearTest(){
-	chassis.moveToPose(24,48,0,5000);
-	
-}
-
-
-void redAutonomous(){
-	bool redColor = false; // For red autonomous
-
-	pros::Task opticalTask(opticalSensorAuton,&redColor);
-	chassis.setPose(72,0,180);
-	
-	chassis.moveToPose(72,10,180,3000,{.forwards = false});
-	intake_upper.move(-127);
+	chassis.setPose(72, 0, 180);
+	intake_upper.move_voltage(-12000);
 	pros::delay(500);
-	intake_upper.move(0);
-	chassis.moveToPose(66,35.5,150,4000,{.forwards = false});
-	arm_motor.move_velocity(100);
-	pros::delay(2000);
-	arm_motor.move_velocity(0);
+	intake_upper.move_voltage(0);
+	chassis.moveToPose(50, 50, 130, 3000, {.forwards = false}, false);
 	mobo_piston.extend();
 	mobo_piston2.extend();
-	chassis.moveToPose(36,29,270,3000);
-	intakeMotorGroup.move_voltage(12000);
-	pros::delay(2000);
-	chassis.moveToPoint(38,28,3000,{.forwards=false});	
-	pros::delay(3500);
+	arm_motor.move_voltage(12000);
+	pros::delay(1000);
+	arm_motor.move_voltage(0);
+	intakeMotorGroup.move_velocity(12000);
+	pros::delay(1000);
+	chassis.moveToPose(31, 38, 270, 3000,{},false);
+	// chassis.moveToPoint(36, 32, 3000, {.forwards = false,.maxSpeed = 75   });
+	pros::delay(1500);
+	intakeMotorGroup.move(0);
 	intake_piston.extend();
-	chassis.moveToPose(87.5,11.5,182,4000,{.lead = 0.3,.maxSpeed = 70});
-	pros::delay(3000);
-	chassis.moveToPose(89.5,24,0,4000,{.forwards = false});
+	chassis.moveToPose(82,-14,180,4000,{},false);
+	arm_motor.move_voltage(-12000);
+	pros::delay(600);
+	arm_motor.move_voltage(0);
+	chassis.moveToPose(85,24,45,3000,{.forwards = false});
 
-	// intake_piston.retract();
-	// 	arm_motor.move_velocity(-100);
-	// pros::delay(2000);
-	// arm_motor.move_velocity(0);
-	// pros::delay(2500);
-	// intakeMotorGroup.move_voltage(0);
-	// chassis.turnToHeading(180,3000);
-	// chassis.moveToPose(89.5,2,45,4000);
-
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	// chassis.moveToPose(72,16,180,3000);
-
-	// arm_motor.move_relative(-20,100);
-	// pros::delay(2000);
-	// chassis.moveToPose(48,48,180,3000,{.forwards = false});
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	// intakeMotorGroup.move(127);
-	// pros::delay(2000);
-	// chassis.turnToHeading(270,2000);
-	// chassis.moveToPoint(24,48,3000);
-	// chassis.moveToPose(72,24,0,3000);
-	// chassis.moveToPose(72,48,0,3000);
 }
 
-void blueAutonomous(){
-	bool blueColor = true; // For blue autonomous
-	pros::Task opticalTask(opticalSensorAuton,&blueColor);
-	chassis.setPose(72,0,180);
-	
-	chassis.moveToPose(72,10,180,3000,{.forwards = false});
-	intake_upper.move(-127);
-	pros::delay(500);
-	intake_upper.move(0);
-	pros::delay(650);
-	arm_motor.move_velocity(100);
-	pros::delay(1750);
-	arm_motor.move_velocity(0);
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void matchAutonomous2()
+{
 	
-	chassis.moveToPose(66.5,35.5,155,4000,{.forwards = false});
-	
-	pros::delay(3000);
+	chassis.setPose(72, 0, 180);
+	intake_upper.move_voltage(-12000);
+	pros::delay(500);
+	intake_upper.move_voltage(0);
+	pros::delay(500);
+	chassis.moveToPose(50, 50, 130, 3000, {.forwards = false}, false);
 	mobo_piston.extend();
 	mobo_piston2.extend();
-	chassis.moveToPose(12,36,270,3000);
-	
-	
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	// chassis.moveToPose(72,16,180,3000);
-
-	// arm_motor.move_relative(-20,100);
-	// pros::delay(2000);
-	// chassis.moveToPose(48,48,180,3000,{.forwards = false});
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	// intakeMotorGroup.move(127);
-	// pros::delay(2000);
-	// chassis.turnToHeading(270,2000);
-	// chassis.moveToPoint(24,48,3000);
-	// chassis.moveToPose(72,24,0,3000);
-	// chassis.moveToPose(72,48,0,3000);
-}
-
-void matchAutonomous(){
-	chassis.setPose(72,0,180);
-	
-	chassis.moveToPose(72,10,180,3000,{.forwards = false});
-	intake_upper.move(-127);
-	pros::delay(500);
-	intake_upper.move(0);
-	chassis.moveToPose(66,35.5,150,4000,{.forwards = false});
-	arm_motor.move_velocity(100);
-	pros::delay(2000);
-	arm_motor.move_velocity(0);
-
-
-
-
-
-	mobo_piston.extend();
-	mobo_piston2.extend();
-	chassis.moveToPose(36,29,270,3000);
-	intakeMotorGroup.move_voltage(12000);
-	pros::delay(2000);
-	chassis.moveToPoint(38,28,3000,{.forwards=false});	
-	pros::delay(3500);
+	arm_motor.move_voltage(12000);
+	pros::delay(1000);
+	arm_motor.move_voltage(0);
+	intakeMotorGroup.move_velocity(12000);
+	pros::delay(1000);
+	chassis.moveToPose(30, 38, 270, 3000);
+	// pros::delay(1500);
+	// chassis.moveToPoint(36, 32, 3000, {.forwards = false,.maxSpeed = 75   });
+	intakeMotorGroup.move_velocity(12000);
 	intake_piston.extend();
-	chassis.moveToPose(87.5,11.5,182,4000,{.lead = 0.3,.maxSpeed = 70});
-	pros::delay(3000);
-	chassis.moveToPose(89.5,24,0,4000,{.forwards = false});
 
-	// intake_piston.retract();
-	// 	arm_motor.move_velocity(-100);
-	// pros::delay(2000);
-	// arm_motor.move_velocity(0);
-	// pros::delay(2500);
-	// intakeMotorGroup.move_voltage(0);
-	// chassis.turnToHeading(180,3000);
-	// chassis.moveToPose(89.5,2,45,4000);
+	chassis.moveToPose(85,-15,180,4000); 
+	
 
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	// chassis.moveToPose(72,16,180,3000);
-
-	// arm_motor.move_relative(-20,100);
-	// pros::delay(2000);
-	// chassis.moveToPose(48,48,180,3000,{.forwards = false});
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	// intakeMotorGroup.move(127);
-	// pros::delay(2000);
-	// chassis.turnToHeading(270,2000);
-	// chassis.moveToPoint(24,48,3000);
-	// chassis.moveToPose(72,24,0,3000);
-	// chassis.moveToPose(72,48,0,3000);
 }
 
+
+void huhAuton(){
+	 chassis.setPose(72, 0, 0);
+	intake_upper.move_voltage(-12000);
+	pros::delay(500);
+	intake_upper.move_voltage(0);
+	chassis.moveToPose(72,32,0,3000);
+}
 
 ASSET(skills1_txt);
 ASSET(skills2_txt);
-ASSET(match1_txt);
-ASSET(match2_txt);
-ASSET(match3_txt);
-ASSET(match4_txt);
-void skillsAutonomous(){
+
+void skillsAutonomous()
+{
 	intakeMotorGroup.move(127);
-	chassis.follow(skills1_txt,10,10000);
+	chassis.follow(skills1_txt, 10, 10000);
 	mobo_piston.extend();
 	mobo_piston2.extend();
-	chassis.follow(skills2_txt,10,20000);
+	chassis.follow(skills2_txt, 10, 20000);
 	mobo_piston.retract();
 	mobo_piston2.retract();
-
-
 }
 
-void matchAutonomousPursuit(){
-	arm_motor.move(127);
-	pros::delay(1000);
-	intakeMotorGroup.move(0);
-	chassis.follow(match1_txt,10,3000);
-	arm_motor.move(-127);
-	pros::delay(1000);
-	arm_motor.move(127);
-	pros::delay(1000);
-	intakeMotorGroup.move(127);
-	chassis.follow(match2_txt,10,5000);
+void skillAutonEtc()
+{
+
+	chassis.setPose(99,0,145);
+	intake_upper.move_voltage(-12000);
+	pros::delay(500);
+	intake_upper.move_voltage(0);
+	intakeMotorGroup.move_velocity(200);
 	mobo_piston.extend();
 	mobo_piston2.extend();
-	pros::delay(500);
-	chassis.follow(match3_txt,10,3000);
-	intake_piston.extend();
-	chassis.follow(match4_txt,10,3000);
-
+	chassis.turnToHeading(90,2000);
+	chassis.moveToPoint(108,0,3000);
+	chassis.turnToHeading(0,2000);
+	chassis.moveToPoint(108,10,3000);
+	chassis.turnToHeading(90,2000);
+	chassis.moveToPoint(130,10,3000);
+	chassis.moveToPose(130,-3,0,2000,{.forwards = false});
+	chassis.turnToHeading(325,2000);
+	chassis.moveToPoint(133,-3,2000,{.forwards = false});
+	pros::delay(750);
+	mobo_piston.retract();
+	mobo_piston2.retract();
+	chassis.moveToPoint(80,5,4000);
+	// chassis.moveToPose(61,12,90,3000,{.forwards = false});
+	// pros::delay(750);
+	// mobo_piston.extend();
+	// mobo_piston2.extend();
 	
+ 
+
+
+
+
 }
 
-void returnTest(){
-	chassis.moveToPose(0,0,0,5000);
-
+void autonomous()
+{
+	skillAutonEtc();
 }
-
-rd::Selector selector({
-    {"Red Auton", redAutonomous},
-    {"Blue auton", blueAutonomous},
-    {"Skills auton", skillsAutonomous},
-});
-
-
-void autonomous() {
-	selector.run_auton();
-}
-
-
-
-
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -381,6 +261,43 @@ void autonomous() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+bool opticalBool = false;
+
+void opticalLed()
+{
+	while (opticalBool)
+	{
+		led1.set_value(HIGH);
+		pros::delay(1000);
+		led1.set_value(LOW);
+	}
+}
+
+void optical()
+{
+
+	while (true)
+	{
+		if (opticalBool)
+		{
+			intakeMotorGroup.move_voltage(6000);
+
+			if (((opticalSensor.get_hue() > 200) || (opticalSensor.get_hue() < 20)))
+			{
+
+				intakeMotorGroup.move_voltage(0);
+				opticalSensor.set_led_pwm(0);
+				// pros::delay(500);
+				intake_upper.move_relative(-2500, 200);
+				pros::delay(600);
+				arm_piston.extend();
+				arm_motor.move_relative(-40, 100);
+				opticalSensor.set_led_pwm(100);
+				pros::delay(1000);
+			}
+		}
+	}
+}
 
 void opcontrol()
 {
@@ -391,16 +308,16 @@ void opcontrol()
 	bool intakeUpperBool = false;
 
 	bool pneumaticsBool = false;
+	pros::Controller master(pros::E_CONTROLLER_MASTER);
 
 	int goalHeight = 0;
 	bool armBool = false;
 	bool armPBool = false;
-	
+	bool ledBool = true;
 
 	while (true)
 	{
-			 master.set_text(2,0,std::to_string(chassis.getPose().x));
-	std::cout << std::to_string(chassis.getPose().y);
+
 		// Read the controller buttons
 		int power = master.get_analog(ANALOG_LEFT_Y);
 		int turn = master.get_analog(ANALOG_RIGHT_X);
@@ -409,69 +326,31 @@ void opcontrol()
 		LeftDrivetrain.move(left);
 		RightDrivetrain.move(right);
 
+		std::cout << arm_motor.get_position();
 
-	std::cout << arm_motor.get_position();
-		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
-		// {
+		if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
+		{
 
-		// 	goalHeight += 128;
-		// 	armControl->setTarget(goalHeight);
-		// 	pros::delay(5);
-		// }
+			arm_motor.move_velocity(100);
+		}
 
-		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
-		// {
-		// 	armControl->setMaxVelocity(100);
-		// 	goalHeight -= 132;
-		// 	armControl->setTarget(goalHeight);
-		// 	pros::delay(5);
-		// }
+		else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
+		{
 
+			arm_motor.move_velocity(-100);
+		}
 
+		else
+		{
 
-		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L1))
-		// {
-		// 	goalHeight += 1;
-
-		// 	armControl->setTarget(goalHeight);
-		// }
-
-
-
-		// if (master.get_digital(pros::E_CONTROLLER_DIGITAL_L2))
-		// {
-		// 	goalHeight -= 1;
-		// 	armControl->setTarget(goalHeight);
-		// }
-
-	if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R1)){
-
-		arm_motor.move_velocity(100);
-	}
-
-	else if(master.get_digital(pros::E_CONTROLLER_DIGITAL_R2)){
-
-		arm_motor.move_velocity(-100);
-
-	}
-
-	else{
-
-		arm_motor.move_voltage(0);
-	}
-
-
-
-
-
-
-
-
+			arm_motor.move_voltage(0);
+		}
 
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X))
 		{
 			intakeBool = !intakeBool;
-			intakeMotorGroup.move(intakeBool ? 127 : 0);
+			intake_lower.move(intakeBool ? 127 : 0);
+			intake_upper.move(intakeBool ? 127 : 0);
 		}
 
 		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
@@ -490,38 +369,61 @@ void opcontrol()
 		{
 			mobo_piston.toggle();
 			mobo_piston2.toggle();
-
-			
+			ledBool = !ledBool;
+			led1.set_value(ledBool);
 		}
 
-		if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)){
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2))
+		{
+			opticalBool = !opticalBool;
+			led2.set_value(!opticalBool);
+		}
+
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y))
+		{
+			intake_piston.toggle();
+		}
+
+		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP))
+		{
 			arm_piston.toggle();
-	
 		}
 
+		if (opticalBool)
+		{
+					master.set_text(2, 0, "Optical On");
 
-if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP))
-{
-	angularTest();
-}
+  
+			if (((opticalSensor.get_hue() > 200) || (opticalSensor.get_hue() < 20)))
+			{
+				arm_piston.extend();
+				pros::delay(350);
+				opticalSensor.set_led_pwm(0);
+				intakeMotorGroup.move_voltage(0);
+				pros::delay(500);
+				intake_upper.move_relative(-2500, 200);
+				pros::delay(600);
+				arm_motor.move_relative(-40, 100);
+				opticalSensor.set_led_pwm(100);
+				pros::delay(1000);
 
-if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN))
-{
-	linearTest();
-}
-	
-if(master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_LEFT))
-{
-	returnTest();
-}
+			}
+		}
+		else{
+								master.set_text(2, 0, "Optical Off");
 
+		}
 
-if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)){
+		if (limitSwitch.get_new_press())
+		{
+			pros::delay(500);
+			mobo_piston.extend();
+			mobo_piston2.extend();
+			ledBool = false;
+			led1.set_value(ledBool);
+		}
 
-		intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
-
-}
-
+		// intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
 
 		// mobo_piston.set_value(mobo_limit_switch.get_value() == HIGH ? HIGH : LOW);
 	}
