@@ -4,7 +4,8 @@
       "name": "PROS Project",
       "includePath": [
         "${workspaceFolder}/**",
-        "c:\\Users\\Ender\\Downloads\\EZ-Template-main\\EZ-Template-main\\include"
+        "c:\\Users\\Ender\\Downloads\\EZ-Template-main\\EZ-Template-main\\include",
+        "d:\\Vex Coding Projects\\23218B-High-Stakes\\include"
       ],
       "defines": [
         "_DEBUG",
@@ -17,7 +18,7 @@
       "intelliSenseMode": "gcc-arm",
       "browse": {
         "path": [
-          "c:\\Users\\Ender\\Downloads\\EZ-Template-main\\EZ-Template-main"
+          "d:\\Vex Coding Projects\\23218B-High-Stakes"
         ],
         "limitSymbolsToIncludedHeaders": true,
         "databaseFilename": ""
