@@ -1,12 +1,27 @@
 #include "main.h"
-#include "lemlib/api.hpp"
 
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
+/////
+// For installation, upgrading, documentations, and tutorials, check out our website!
+// https://ez-robotics.github.io/EZ-Template/
+/////
+
+// Chassis constructor
+ez::Drive chassis(
+    // These are your drive motors, the first motor is used for sensing!
+    {11, -13, -14},  // Left Chassis Ports (negative port will reverse it!)
+    {12, 15, -17},   // Right Chassis Ports (negative port will reverse it!)
+
+    19,      // IMU Port
+    3.25,    // Wheel Diameter (Remember, 4" wheels without screw holes are actually 4.125!)
+    410.0);  // Wheel RPM = cartridge * (motor gear / wheel gear)
+
+// Uncomment the trackers you're using here!
+// - `8` and `9` are smart ports (making these negative will reverse the sensor)
+//  - you should get positive values on the encoders going FORWARD and RIGHT
+// - `2.75` is the wheel diameter
+// - `4.0` is the distance from the center of the wheel to the center of the robot
+ez::tracking_wheel horiz_tracker({'G', 'H'}, 2.75, -0.04);  // This tracking wheel is perpendicular to the drive wheels
+ez::tracking_wheel vert_tracker({'C', 'D'}, 2.75, -0.29);   // This tracking wheel is parallel to the drive wheels
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -14,74 +29,68 @@
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
+void initialize() {
+  // Print our branding over your terminal :D
+  ez::ez_template_print();
 
-lemlib::Drivetrain drivetrain(&LeftDrivetrain,			  // left motor group
-							  &RightDrivetrain,			  // right motor group
-							  13.61,					  // 10 inch track width
-							  lemlib::Omniwheel::NEW_325, // using new 3.25" omnis
-							  450,						  // drivetrain rpm is 450
-							  2							  // horizontal drift is 2 (for now)
-);
+  pros::delay(500);  // Stop the user from doing anything while legacy ports configure
 
-pros::adi::Encoder left_encoder('G', 'H');
-pros::adi::Encoder right_encoder('A', 'B');
-pros::adi::Encoder back_encoder('C', 'D', true);
+  // Look at your horizontal tracking wheel and decide if it's in front of the midline of your robot or behind it
+  //  - change `back` to `front` if the tracking wheel is in front of the midline
+  //  - ignore this if you aren't using a horizontal tracker
+  chassis.odom_tracker_back_set(&horiz_tracker);
 
-lemlib::TrackingWheel left_tracking_wheel(&left_encoder, lemlib::Omniwheel::NEW_275, 3.24);
+  // Look at your vertical tracking wheel and decide if it's to the left or right of the center of the robot
+  //  - change `left` to `right` if the tracking wheel is to the right of the centerline
+  //  - ignore this if you aren't using a vertical tracker
+  chassis.odom_tracker_left_set(&vert_tracker);
 
-lemlib::TrackingWheel right_tracking_wheel(&right_encoder, lemlib::Omniwheel::NEW_275, -2.75);
+  // Configure your chassis controls
+  chassis.opcontrol_curve_buttons_toggle(true);   // Enables modifying the controller curve with buttons on the joysticks
+  chassis.opcontrol_drive_activebrake_set(2.0);   // Sets the active brake kP. We recommend ~2.  0 will disable.
+  chassis.opcontrol_curve_default_set(0.0, 0.0);  // Defaults for curve. If using tank, only the first parameter is used. (Comment this line out if you have an SD card!)
 
-lemlib::TrackingWheel back_tracking_wheel(&back_encoder, lemlib::Omniwheel::NEW_275, -2.8);
+  // Set the drive to your own constants from autons.cpp!
+  default_constants();
 
-pros::Imu imu(7);
+  // These are already defaulted to these buttons, but you can change the left/right curve buttons here!
+  // chassis.opcontrol_curve_buttons_left_set(pros::E_CONTROLLER_DIGITAL_LEFT, pros::E_CONTROLLER_DIGITAL_RIGHT);  // If using tank, only the left side is used.
+  // chassis.opcontrol_curve_buttons_right_set(pros::E_CONTROLLER_DIGITAL_Y, pros::E_CONTROLLER_DIGITAL_A);
 
-lemlib::OdomSensors sensors(&left_tracking_wheel,
-							nullptr,
-							&back_tracking_wheel, // horizontal tracking wheel 1
-							nullptr,			  // horizontal tracking wheel 2, set to nullptr as we don't have a second one
-							&imu				  // inertial sensor
-);
+  // Autonomous Selector using LLEMU, red is flipped lol
+  ez::as::auton_selector.autons_add({
+    {"Red Side Left Auton", red_side_right},
+    {"Blue Side Right Auton", blue_side_right},
 
-// lateral PID controller
-lemlib::ControllerSettings lateral_controller(10,  // proportional gain (kP)
-											  0,   // integral gain (kI)
-											  1,   // derivative gain (kD)
-											  3,   // anti windup
-											  1,   // small error range, in inches
-											  100, // small error range timeout, in milliseconds
-											  3,   // large error range, in inches
-											  500, // large error range timeout, in milliseconds
-											  20   // maximum acceleration (slew)
-);
+    {"Skils Auton", skills_auton},
+      {"Blue Side Left Auton", blue_side_left},
+      
+      {"Red Side Right Auton", red_side_left},
 
-// angular PID controller
-lemlib::ControllerSettings angular_controller(1.55, // proportional gain (kP)
-											  0,	// integral gain (kI)
-											  10,	// derivative gain (kD)
-											  0,	// anti windup
-											  0,	// small error range, in inches
-											  0,	// small error range timeout, in milliseconds
-											  0,	// large error range, in inches
-											  0,	// large error range timeout, in milliseconds
-											  0		// maximum acceleration (slew)
-);
-lemlib::Chassis chassis(drivetrain,			// drivetrain settings
-						lateral_controller, // lateral PID settings
-						angular_controller, // angular PID settings
-						sensors				// odometry sensors
-);
+      
 
-void initialize()
-{
-	pros::c::ext_adi_port_set_config(17, 'A', pros::E_ADI_DIGITAL_OUT);
-	pros::c::ext_adi_port_set_config(17, 'C', pros::E_ADI_DIGITAL_OUT);
-	pros::c::ext_adi_port_set_config(17, 'B', pros::E_ADI_DIGITAL_OUT);
-	pros::c::ext_adi_port_set_config(17, 'D', pros::E_ADI_DIGITAL_OUT);
-	pros::c::ext_adi_port_set_config(17, 'E', pros::E_ADI_DIGITAL_IN);
-	led1.set_value(HIGH);
-	led2.set_value(HIGH);
-	opticalSensor.set_led_pwm(100);
-	chassis.calibrate();
+      {"Drive\n\nDrive forward and come back", drive_example},
+      {"Turn\n\nTurn 3 times.", turn_example},
+      {"Drive and Turn\n\nDrive forward, turn, come back", drive_and_turn},
+      {"Drive and Turn\n\nSlow down during drive", wait_until_change_speed},
+      {"Swing Turn\n\nSwing in an 'S' curve", swing_example},
+      {"Motion Chaining\n\nDrive forward, turn, and come back, but blend everything together :D", motion_chaining},
+      {"Combine all 3 movements", combining_movements},
+      {"Interference\n\nAfter driving forward, robot performs differently if interfered or not", interfered_example},
+      {"Simple Odom\n\nThis is the same as the drive example, but it uses odom instead!", odom_drive_example},
+      {"Pure Pursuit\n\nGo to (0, 30) and pass through (6, 10) on the way.  Come back to (0, 0)", odom_pure_pursuit_example},
+      {"Pure Pursuit Wait Until\n\nGo to (24, 24) but start running an intake once the robot passes (12, 24)", odom_pure_pursuit_wait_until_example},
+      {"Boomerang\n\nGo to (0, 24, 45) then come back to (0, 0, 0)", odom_boomerang_example},
+      {"Boomerang Pure Pursuit\n\nGo to (0, 24, 45) on the way to (24, 24) then come back to (0, 0, 0)", odom_boomerang_injected_pure_pursuit_example},
+      {"Measure Offsets\n\nThis will turn the robot a bunch of times and calculate your offsets for your tracking wheels.", measure_offsets}
+
+  });
+
+  // Initialize chassis and auton selector
+  opticalSensor.set_led_pwm(100);
+  chassis.initialize();
+  ez::as::initialize();
+  master.rumble(chassis.drive_imu_calibrated() ? "." : "---");
 }
 
 /**
@@ -89,7 +98,9 @@ void initialize()
  * the VEX Competition Switch, following either autonomous or opcontrol. When
  * the robot is enabled, this task will exit.
  */
-void disabled() {}
+void disabled() {
+  // . . .
+}
 
 /**
  * Runs after initialize(), and before autonomous when connected to the Field
@@ -100,7 +111,9 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+void competition_initialize() {
+  // . . .
+}
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -113,139 +126,173 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
+void autonomous() {
+  chassis.pid_targets_reset();                // Resets PID targets to 0
+  chassis.drive_imu_reset();                  // Reset gyro position to 0
+  chassis.drive_sensor_reset();               // Reset drive sensors to 0
+  chassis.odom_xyt_set(0_in, 0_in, 0_deg);    // Set the current position, you can start at a specific position with this
+  chassis.drive_brake_set(MOTOR_BRAKE_HOLD);  // Set motors to hold.  This helps autonomous consistency
 
-void matchAutonomous()
-{
+  /*
+  Odometry and Pure Pursuit are not magic
 
-	chassis.setPose(72, 0, 180);
-	intake_upper.move_voltage(-12000);
-	pros::delay(500);
-	intake_upper.move_voltage(0);
-	chassis.moveToPose(50, 50, 130, 3000, {.forwards = false}, false);
-	mobo_piston.extend();
-	mobo_piston2.extend();
-	arm_motor.move_voltage(12000);
-	pros::delay(1000);
-	arm_motor.move_voltage(0);
-	intakeMotorGroup.move_velocity(12000);
-	pros::delay(1000);
-	chassis.moveToPose(31, 38, 270, 3000,{},false);
-	// chassis.moveToPoint(36, 32, 3000, {.forwards = false,.maxSpeed = 75   });
-	pros::delay(1500);
-	intakeMotorGroup.move(0);
-	intake_piston.extend();
-	chassis.moveToPose(82,-14,180,4000,{},false);
-	arm_motor.move_voltage(-12000);
-	pros::delay(600);
-	arm_motor.move_voltage(0);
-	chassis.moveToPose(85,24,45,3000,{.forwards = false});
+  It is possible to get perfectly consistent results without tracking wheels,
+  but it is also possible to have extremely inconsistent results without tracking wheels.
+  When you don't use tracking wheels, you need to:
+   - avoid wheel slip
+   - avoid wheelies
+   - avoid throwing momentum around (super harsh turns, like in the example below)
+  You can do cool curved motions, but you have to give your robot the best chance
+  to be consistent
+  */
 
+  ez::as::auton_selector.selected_auton_call();  // Calls selected auton from autonomous selector
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void matchAutonomous2()
-{
-	
-	chassis.setPose(72, 0, 180);
-	intake_upper.move_voltage(-12000);
-	pros::delay(500);
-	intake_upper.move_voltage(0);
-	pros::delay(500);
-	chassis.moveToPose(50, 50, 130, 3000, {.forwards = false}, false);
-	mobo_piston.extend();
-	mobo_piston2.extend();
-	arm_motor.move_voltage(12000);
-	pros::delay(1000);
-	arm_motor.move_voltage(0);
-	intakeMotorGroup.move_velocity(12000);
-	pros::delay(1000);
-	chassis.moveToPose(30, 38, 270, 3000);
-	// pros::delay(1500);
-	// chassis.moveToPoint(36, 32, 3000, {.forwards = false,.maxSpeed = 75   });
-	intakeMotorGroup.move_velocity(12000);
-	intake_piston.extend();
-
-	chassis.moveToPose(85,-15,180,4000); 
-	
-
+/**
+ * Simplifies printing tracker values to the brain screen
+ */
+void screen_print_tracker(ez::tracking_wheel *tracker, std::string name, int line) {
+  std::string tracker_value = "", tracker_width = "";
+  // Check if the tracker exists
+  if (tracker != nullptr) {
+    tracker_value = name + " tracker: " + util::to_string_with_precision(tracker->get());             // Make text for the tracker value
+    tracker_width = "  width: " + util::to_string_with_precision(tracker->distance_to_center_get());  // Make text for the distance to center
+  }
+  ez::screen_print(tracker_value + tracker_width, line);  // Print final tracker text
 }
 
+/**
+ * Ez screen task
+ * Adding new pages here will let you view them during user control or autonomous
+ * and will help you debug problems you're having
+ */
+void ez_screen_task() {
+  while (true) {
+    // Only run this when not connected to a competition switch
+    if (!pros::competition::is_connected()) {
+      // Blank page for odom debugging
+      if (chassis.odom_enabled() && !chassis.pid_tuner_enabled()) {
+        // If we're on the first blank page...
+        if (ez::as::page_blank_is_on(0)) {
+          // Display X, Y, and Theta
+          ez::screen_print("x: " + util::to_string_with_precision(chassis.odom_x_get()) +
+                               "\ny: " + util::to_string_with_precision(chassis.odom_y_get()) +
+                               "\na: " + util::to_string_with_precision(chassis.odom_theta_get()),
+                           1);  // Don't override the top Page line
 
-void huhAuton(){
-	 chassis.setPose(72, 0, 0);
-	intake_upper.move_voltage(-12000);
-	pros::delay(500);
-	intake_upper.move_voltage(0);
-	chassis.moveToPose(72,32,0,3000);
+          // Display all trackers that are being used
+          screen_print_tracker(chassis.odom_tracker_left, "l", 4);
+          screen_print_tracker(chassis.odom_tracker_right, "r", 5);
+          screen_print_tracker(chassis.odom_tracker_back, "b", 6);
+          screen_print_tracker(chassis.odom_tracker_front, "f", 7);
+        }
+      }
+    }
+
+    // Remove all blank pages when connected to a comp switch
+    else {
+      if (ez::as::page_blank_amount() > 0)
+        ez::as::page_blank_remove_all();
+    }
+
+    pros::delay(ez::util::DELAY_TIME);
+  }
 }
+pros::Task ezScreenTask(ez_screen_task);
 
-ASSET(skills1_txt);
-ASSET(skills2_txt);
+// might cause problems with other optical tasks
+//  void opticalTask(){
+//  pros::delay(2000);
+//  while(true){
 
-void skillsAutonomous()
-{
-	intakeMotorGroup.move(127);
-	chassis.follow(skills1_txt, 10, 10000);
-	mobo_piston.extend();
-	mobo_piston2.extend();
-	chassis.follow(skills2_txt, 10, 20000);
-	mobo_piston.retract();
-	mobo_piston2.retract();
-}
+//   int hue = opticalSensor.get_hue();
 
-void skillAutonEtc()
-{
+//   if(isRed){
 
-	chassis.setPose(99,0,145);
-	intake_upper.move_voltage(-12000);
-	pros::delay(500);
-	intake_upper.move_voltage(0);
-	intakeMotorGroup.move_velocity(200);
-	mobo_piston.extend();
-	mobo_piston2.extend();
-	chassis.turnToHeading(90,2000);
-	chassis.moveToPoint(108,0,3000);
-	chassis.turnToHeading(0,2000);
-	chassis.moveToPoint(108,10,3000);
-	chassis.turnToHeading(90,2000);
-	chassis.moveToPoint(130,10,3000);
-	chassis.moveToPose(130,-3,0,2000,{.forwards = false});
-	chassis.turnToHeading(325,2000);
-	chassis.moveToPoint(133,-3,2000,{.forwards = false});
-	pros::delay(750);
-	mobo_piston.retract();
-	mobo_piston2.retract();
-	chassis.moveToPoint(80,5,4000);
-	// chassis.moveToPose(61,12,90,3000,{.forwards = false});
-	// pros::delay(750);
-	// mobo_piston.extend();
-	// mobo_piston2.extend();
-	
+//     if(hue > 200){
+
+//       intake_upper.move(0);
+//       intake_lower.move(0);
+//       pros::delay(200);
+//       some_piston.extend();
+//       some_piston2.extend();
+//       pros::delay(200);
+
+//       intake_upper.move(43);
+//       pros::delay(1000);
+//       intake_upper.move(0);
+//       some_piston.retract();
+//       some_piston2.retract();
+
+//     }
+//   }
+//   else{
+//     if(hue < 20){
+//       intake_upper.move(0);
+//       intake_lower.move(0);
+//       pros::delay(200);
+//       some_piston.extend();
+//       some_piston2.extend();
+//       pros::delay(200);
+
+//       intake_upper.move(-43);
+//       pros::delay(1500);
+//       intake_upper.move(0);
+//       some_piston.retract();
+//       some_piston2.retract();
+//     }
+//   }
+//   pros::delay(ez::util::DELAY_TIME);
+// }
+
+// }
+// pros::Task opticalT(opticalTask);
+
+/**
+ * Gives you some extras to run in your opcontrol:
+ * - run your autonomous routine in opcontrol by pressing DOWN and B
+ *   - to prevent this from accidentally hap
+ * 
+ * 
+ * 
  
+ 
+ 
+ 
+ 
+ 
+ pening at a competition, this
+ *     is only enabled when you're not connected to competition control.
+ * - gives you a GUI to change your PID values live by pressing X
+ */
+void ez_template_extras() {
+  // Only run this when not connected to a competition switch
+  if (!pros::competition::is_connected()) {
+    // PID Tuner
+    // - after you find values that you're happy with, you'll have to set them in auton.cpp
 
+    // Enable / Disable PID Tuner
+    //  When enabled:
+    //  * use A and Y to increment / decrement the constants
+    //  * use the arrow keys to navigate the constants
 
+    // Trigger the selected autonomous routine
+    if (master.get_digital(DIGITAL_UP)) {
+      pros::motor_brake_mode_e_t preference = chassis.drive_brake_get();
+      autonomous();
+      chassis.drive_brake_set(preference);
+    }
 
+    // Allow PID Tuner to iterate
+    chassis.pid_tuner_iterate();
+  }
 
-}
-
-void autonomous()
-{
-	skillAutonEtc();
+  // Disable PID Tuner when connected to a comp switch
+  else {
+    if (chassis.pid_tuner_enabled())
+      chassis.pid_tuner_disable();
+  }
 }
 
 /**
@@ -261,170 +308,97 @@ void autonomous()
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-bool opticalBool = false;
+void opcontrol() {
+  // This is preference to what you like to drive on
+  chassis.drive_brake_set(MOTOR_BRAKE_COAST);
+  bool intakeLowerBool = false;
+  bool intakeUpperBool = false;
+  bool intakeReverseLowerBool = false;
+  bool intakeReverseUpperBool = false;
+  bool intakeLowSpeed = false;
+  bool rumbled = false;
+  bool opticalBool = false;
+  while (true) {
+    // Gives you some extras to make EZ-Template ezier
+    ez_template_extras();
 
-void opticalLed()
-{
-	while (opticalBool)
-	{
-		led1.set_value(HIGH);
-		pros::delay(1000);
-		led1.set_value(LOW);
-	}
-}
+    // chassis.opcontrol_tank();  // Tank control
+    chassis.opcontrol_arcade_standard(ez::SPLIT);  // Standard split arcade
+    // chassis.opcontrol_arcade_standard(ez::SINGLE);  // Standard single arcade
+    // chassis.opcontrol_arcade_flipped(ez::SPLIT);    // Flipped split arcade
+    // chassis.opcontrol_arcade_flipped(ez::SINGLE);   // Flipped single arcade
 
-void optical()
-{
+    // . . .
+    // Put more user control code here!
+    // . . .
 
-	while (true)
-	{
-		if (opticalBool)
-		{
-			intakeMotorGroup.move_voltage(6000);
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1)) {
+      mobo_piston.toggle();
+    }
 
-			if (((opticalSensor.get_hue() > 200) || (opticalSensor.get_hue() < 20)))
-			{
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2)) {
+      some_piston.toggle();
+      some_piston2.toggle();
+    }
 
-				intakeMotorGroup.move_voltage(0);
-				opticalSensor.set_led_pwm(0);
-				// pros::delay(500);
-				intake_upper.move_relative(-2500, 200);
-				pros::delay(600);
-				arm_piston.extend();
-				arm_motor.move_relative(-40, 100);
-				opticalSensor.set_led_pwm(100);
-				pros::delay(1000);
-			}
-		}
-	}
-}
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_DOWN)) {
+      intakeLowSpeed = !intakeLowSpeed;
+      intake_upper.move(intakeLowSpeed ? 43 : 0);
+    }
 
-void opcontrol()
-{
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R1)) {
+      doinker_piston.toggle();
+    }
 
-	bool moboPistonBool = false;
-	bool intakeBool = false;
-	bool intakeLowerBool = false;
-	bool intakeUpperBool = false;
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X)) {
+      intakeLowerBool = !intakeLowerBool;
+      intake_lower.move(intakeLowerBool ? 127 : 0);
+      intake_upper.move(intakeLowerBool ? 127 : 0);
 
-	bool pneumaticsBool = false;
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
+    }
 
-	int goalHeight = 0;
-	bool armBool = false;
-	bool armPBool = false;
-	bool ledBool = true;
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y)) {
+      intakeUpperBool = !intakeUpperBool;
+      intake_upper.move(intakeUpperBool ? 127 : 0);
+    }
 
-	while (true)
-	{
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B)) {
+      intakeReverseLowerBool = !intakeReverseLowerBool;
+      intake_lower.move(intakeReverseLowerBool ? -127 : 0);
+    }
 
-		// Read the controller buttons
-		int power = master.get_analog(ANALOG_LEFT_Y);
-		int turn = master.get_analog(ANALOG_RIGHT_X);
-		int left = power + turn;
-		int right = power - turn;
-		LeftDrivetrain.move(left);
-		RightDrivetrain.move(right);
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+      intakeReverseUpperBool = !intakeReverseUpperBool;
+      intake_upper.move(intakeReverseUpperBool ? -127 : 0);
+    }
 
-		std::cout << arm_motor.get_position();
+    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_R2)) {
+      opticalSensor.set_led_pwm(100);
 
-		if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R1))
-		{
+      if (!opticalBool) {
+        master.rumble("-");
+      } else {
+        master.rumble(".");
+      }
+      opticalBool = !opticalBool;
+    }
 
-			arm_motor.move_velocity(100);
-		}
+    if (opticalBool) {
+      master.set_text(0, 0, "Optical On");
 
-		else if (master.get_digital(pros::E_CONTROLLER_DIGITAL_R2))
-		{
+      if (((opticalSensor.get_hue() > 200) || (opticalSensor.get_hue() < 20))) {
+        pros::delay(10);
+        intake_upper.move(0);
+        // intake_lower.move(0);
+        // some_piston.extend();
+        // some_piston2.extend();
+      }
+    } else {
+      opticalSensor.set_led_pwm(0);
 
-			arm_motor.move_velocity(-100);
-		}
+      master.set_text(0, 0, "");
+    }
 
-		else
-		{
-
-			arm_motor.move_voltage(0);
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_X))
-		{
-			intakeBool = !intakeBool;
-			intake_lower.move(intakeBool ? 127 : 0);
-			intake_upper.move(intakeBool ? 127 : 0);
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A))
-		{
-			intakeLowerBool = !intakeLowerBool;
-			intake_lower.move(intakeLowerBool ? -127 : 0);
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_B))
-		{
-			intakeUpperBool = !intakeUpperBool;
-			intake_upper.move(intakeUpperBool ? -127 : 0);
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L1))
-		{
-			mobo_piston.toggle();
-			mobo_piston2.toggle();
-			ledBool = !ledBool;
-			led1.set_value(ledBool);
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_L2))
-		{
-			opticalBool = !opticalBool;
-			led2.set_value(!opticalBool);
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_Y))
-		{
-			intake_piston.toggle();
-		}
-
-		if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_UP))
-		{
-			arm_piston.toggle();
-		}
-
-		if (opticalBool)
-		{
-					master.set_text(2, 0, "Optical On");
-
-  
-			if (((opticalSensor.get_hue() > 200) || (opticalSensor.get_hue() < 20)))
-			{
-				arm_piston.extend();
-				pros::delay(350);
-				opticalSensor.set_led_pwm(0);
-				intakeMotorGroup.move_voltage(0);
-				pros::delay(500);
-				intake_upper.move_relative(-2500, 200);
-				pros::delay(600);
-				arm_motor.move_relative(-40, 100);
-				opticalSensor.set_led_pwm(100);
-				pros::delay(1000);
-
-			}
-		}
-		else{
-								master.set_text(2, 0, "Optical Off");
-
-		}
-
-		if (limitSwitch.get_new_press())
-		{
-			pros::delay(500);
-			mobo_piston.extend();
-			mobo_piston2.extend();
-			ledBool = false;
-			led1.set_value(ledBool);
-		}
-
-		// intake_piston.set_value(opticalSensor.get_rgb().red > opticalSensor.get_rgb().blue && opticalSensor.get_rgb().red > opticalSensor.get_rgb().green ?HIGH:LOW);
-
-		// mobo_piston.set_value(mobo_limit_switch.get_value() == HIGH ? HIGH : LOW);
-	}
+    pros::delay(ez::util::DELAY_TIME);  // This is used for timer calculations!  Keep this ez::util::DELAY_TIME
+  }
 }

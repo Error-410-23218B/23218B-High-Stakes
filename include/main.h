@@ -4,7 +4,7 @@
  * Contains common definitions and header files used throughout your PROS
  * project.
  *
- * \copyright Copyright (c) 2017-2023, Purdue University ACM SIGBots.
+ * Copyright (c) 2017-2021, Purdue University ACM SIGBots.
  * All rights reserved.
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -22,7 +22,7 @@
  *
  * For instance, E_CONTROLLER_MASTER has a shorter name: CONTROLLER_MASTER.
  * E_CONTROLLER_MASTER is pedantically correct within the PROS styleguide, but
- * not convenient for most student programmers.
+ * not convienent for most student programmers.
  */
 #define PROS_USE_SIMPLE_NAMES
 
@@ -39,7 +39,14 @@
 /**
  * You should add more #includes here
  */
-//#include "okapi/api.hpp"
+// #include "okapi/api.hpp"
+// #include "pros/api_legacy.h"
+#include "EZ-Template/api.hpp"
+
+// More includes here...
+#include "autons.hpp"
+#include "subsystems.hpp"
+
 /**
  * If you find doing pros::Motor() to be tedious and you'd prefer just to do
  * Motor, you can use the namespace with the following commented out line.
@@ -51,6 +58,8 @@
 // using namespace pros;
 // using namespace pros::literals;
 // using namespace okapi;
+// using namespace ez;
+using namespace okapi::literals;
 
 /**
  * Prototypes for the competition control tasks are redefined here to ensure
@@ -58,36 +67,7 @@
  * button press in opcontrol() for testing purposes).
  */
 
-pros::MotorGroup LeftDrivetrain({-8,-9,-10});
-pros::MotorGroup RightDrivetrain({1,2,3});
-
-pros::Optical opticalSensor(20);
-
-
-
-pros::adi::Pneumatics intake_piston({17,'B'},false); 
-pros::adi::Pneumatics arm_piston({17,'D'},false);
-
-pros::adi::Pneumatics mobo_piston({17,'A'},false);  
-pros::adi::Pneumatics mobo_piston2({17,'C'},false);  
-
-pros::adi::DigitalOut led1('E',HIGH);
-
-pros::adi::DigitalOut led2('F',HIGH);
-
-// pros::adi::DigitalOut intake_piston(std::make_pair(17,'B')); 
-// pros::adi::DigitalOut  arm_piston(std::make_pair(17,'D'));
-
-// pros::adi::DigitalOut  mobo_piston(std::make_pair(17,'A'));  
-// pros::adi::DigitalOut  mobo_piston2(std::make_pair(17,'C'));  
-
-pros::adi::DigitalIn limitSwitch(std::make_pair(17,'E'));
-
-pros::Motor intake_lower(18);
-pros::Motor intake_upper(19);
-pros::Motor arm_motor(-11);
-
-pros::MotorGroup intakeMotorGroup({18,19});
+extern bool isRed;
 
 #ifdef __cplusplus
 extern "C" {
